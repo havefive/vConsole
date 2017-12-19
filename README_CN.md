@@ -11,13 +11,15 @@ vConsole
 
 - 查看 console 日志
 - 查看网络请求
+- 查看页面 element 结构
+- 查看 Cookies 和 localStorage
 - 手动执行 JS 命令行
 - 自定义插件
 
 
 ## 上手
 
-下载 vConsole 的[最新版本](https://github.com/WechatFE/vConsole/releases/latest)。（不要直接下载 dev 分支下的 `dist/vconsole.min.js`）
+下载 vConsole 的[最新版本](https://github.com/Tencent/vConsole/releases/latest)。（不要直接下载 dev 分支下的 `dist/vconsole.min.js`）
 
 或者使用 npm 安装：
 
@@ -30,8 +32,9 @@ npm install vconsole
 ```html
 <script src="path/to/vconsole.min.js"></script>
 <script>
-console.log('Hello world');
-// 然后点击右下角 vConsole 按钮即可查看到 log
+  // 初始化
+  var vConsole = new VConsole();
+  console.log('Hello world');
 </script>
 ```
 
@@ -67,9 +70,7 @@ vConsole 本体：
 
 ## 插件列表
 
- - [vConsole-resources](https://github.com/WechatFE/vConsole-resources)
  - [vConsole-sources](https://github.com/WechatFE/vConsole-sources)
- - [vConsole-elements](https://github.com/WechatFE/vConsole-elements)
  - [vconsole-webpack-plugin](https://github.com/diamont1001/vconsole-webpack-plugin)
 
 
@@ -82,7 +83,8 @@ vConsole 本体：
 
 ## CDN
 
-- [v2.5.1](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/2.5.1/vconsole.min.js)
+- [v3.0.0](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js) （推荐）
+- [v2.5.2](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/2.5.2/vconsole.min.js)
 
 
 
@@ -96,4 +98,4 @@ QQ 群：497430533
 
 ## License
 
-The MIT License (http://opensource.org/licenses/MIT)
+[The MIT License](./LICENSE)

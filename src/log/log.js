@@ -1,7 +1,16 @@
+/*
+Tencent is pleased to support the open source community by making vConsole available.
+
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+
+Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+http://opensource.org/licenses/MIT
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+*/
+
 /**
  * vConsole Basic Log Tab
- *
- * @author WechatFE
  */
 
 import * as tool from '../lib/tool.js';
@@ -10,6 +19,8 @@ import VConsolePlugin from '../lib/plugin.js';
 import tplItem from './item.html';
 import tplFold from './item_fold.html';
 import tplFoldCode from './item_fold_code.html';
+
+const DEFAULT_MAX_LOG_NUMBER = 1000;
 
 class VConsoleLogTab extends VConsolePlugin {
 
@@ -23,8 +34,10 @@ class VConsoleLogTab extends VConsolePlugin {
     this.isShow = false;
     this.$tabbox = null;
     this.console = {};
-    this.logList = [];
+    this.logList = []; // save logs before ready
     this.isInBottom = true; // whether the panel is in the bottom
+    this.maxLogNumber = DEFAULT_MAX_LOG_NUMBER;
+    this.logNumber = 0;
 
     this.mockConsole();
   }
@@ -36,6 +49,7 @@ class VConsoleLogTab extends VConsolePlugin {
    */
   onInit() {
     this.$tabbox = $.render(this.tplTabbox, {});
+    this.updateMaxLogNumber();
   }
 
   /**
@@ -125,7 +139,7 @@ class VConsoleLogTab extends VConsolePlugin {
         that.isInBottom = false;
       }
     });
-    
+
     for (let i=0; i<that.logList.length; i++) {
       that.printLog(that.logList[i]);
     }
@@ -137,7 +151,6 @@ class VConsoleLogTab extends VConsolePlugin {
    * @public
    */
   onRemove() {
-    // recover original console
     window.console.log = this.console.log;
     window.console.info = this.console.info;
     window.console.warn = this.console.warn;
@@ -163,6 +176,32 @@ class VConsoleLogTab extends VConsolePlugin {
     }
   }
 
+  onUpdateOption() {
+    if (this.vConsole.option.maxLogNumber != this.maxLogNumber) {
+      this.updateMaxLogNumber();
+      this.limitMaxLogs();
+    }
+  }
+
+  updateMaxLogNumber() {
+    this.maxLogNumber = this.vConsole.option.maxLogNumber || DEFAULT_MAX_LOG_NUMBER;
+    this.maxLogNumber = Math.max(1, this.maxLogNumber);
+  }
+
+  limitMaxLogs() {
+    if (!this.isReady) {
+      return;
+    }
+    while (this.logNumber > this.maxLogNumber) {
+      let $firstItem = $.one('.vc-item', this.$tabbox);
+      if (!$firstItem) {
+        break;
+      }
+      $firstItem.parentNode.removeChild($firstItem);
+      this.logNumber--;
+    }
+  }
+
   showLogType(logType) {
     let $log = $.one('.vc-log', this.$tabbox);
     $.removeClass($log, 'vc-log-partly-log');
@@ -179,7 +218,9 @@ class VConsoleLogTab extends VConsolePlugin {
 
   scrollToBottom() {
     let $content = $.one('.vc-content');
-    $content.scrollTop = $content.scrollHeight - $content.offsetHeight;
+    if ($content) {
+      $content.scrollTop = $content.scrollHeight - $content.offsetHeight;
+    }
   }
 
   /**
@@ -187,46 +228,25 @@ class VConsoleLogTab extends VConsolePlugin {
    * @private
    */
   mockConsole() {
-    let that = this;
+    const that = this;
+    const methodList = ['log', 'info', 'warn', 'debug', 'error'];
+
     if (!window.console) {
       window.console = {};
     } else {
-      this.console.log = window.console.log;
-      this.console.info = window.console.info;
-      this.console.warn = window.console.warn;
-      this.console.debug = window.console.debug;
-      this.console.error = window.console.error;
+      methodList.map(function(method) {
+        that.console[method] = window.console[method];
+      });
     }
-    window.console.log = function() {
-      that.printLog({
-        logType: 'log',
-        logs: arguments
-      });
-    };
-    window.console.info = function() {
-      that.printLog({
-        logType: 'info',
-        logs: arguments
-      });
-    };
-    window.console.warn = function() {
-      that.printLog({
-        logType: 'warn',
-        logs: arguments
-      });
-    };
-    window.console.debug = function() {
-      that.printLog({
-        logType: 'debug',
-        logs: arguments
-      });
-    };
-    window.console.error = function() {
-      that.printLog({
-        logType: 'error',
-        logs: arguments
-      });
-    };
+
+    methodList.map(method => {
+      window.console[method] = (...args) => {
+        this.printLog({
+          logType: method,
+          logs: args
+        });
+      };
+    });
   }
 
   clearLog() {
@@ -262,12 +282,12 @@ class VConsoleLogTab extends VConsolePlugin {
       return;
     }
 
-    // convert logs to a real array
+    // copy logs as a new array
     logs = [].slice.call(logs || []);
 
     // check `[default]` format
     let shouldBeHere = true;
-    let pattern = /^\[(\w+)\] ?/i;
+    let pattern = /^\[(\w+)\]$/i;
     let targetTabName = '';
     if (tool.isString(logs[0])) {
       let match = logs[0].match(pattern);
@@ -358,6 +378,10 @@ class VConsoleLogTab extends VConsolePlugin {
 
     // render to panel
     $.one('.vc-log', this.$tabbox).insertAdjacentElement('beforeend', $line);
+
+    // remove overflow logs
+    this.logNumber++;
+    this.limitMaxLogs();
 
     // scroll to bottom if it is in the bottom before
     if (this.isInBottom) {

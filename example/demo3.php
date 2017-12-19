@@ -1,40 +1,36 @@
 <?php
-// 这个demo示例如何通过PHP动态加载vConsole
-// (1)访问 demo2.php 时（一般情况），不加载vConsole
-// (2)访问 demo2.php?dev_mode=1 时（调试模式），加载vConsole
-
-$dev_mode = isset($_GET['dev_mode']) ? $_GET['dev_mode'] : '0';
+// 这个demo用于测试CSP的规则
+$nonce = rand(10000, 99999);
+header("Content-Security-Policy: script-src 'self' 'unsafe-inline' 'unsafe-eval' 'nonce-" . $nonce . "';");
 ?><!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>vConsole/Demo2</title>
+  <title>vConsole/Demo3</title>
   <link href="./lib/weui.min.css" rel="stylesheet"/>
   <link href="./lib/demo.css" rel="stylesheet"/>
   
-  <script src="./lib/zepto.min.js"></script>
-  <script src="./lib/zepto.touch.min.js"></script>
+  <!-- <script src="./lib/zepto.min.js" nonce="<?php echo $nonce; ?>"></script>
+  <script src="./lib/zepto.touch.min.js" nonce="<?php echo $nonce; ?>"></script> -->
 
-  <?php if ($dev_mode == '1') { ?>
-    <!-- 引入vConsole的JS库 -->
-    <script src="../dist/vconsole.min.js"></script>
-    <script>
-      // 初始化vConsole
-      window.vConsole = new window.VConsole();
-    </script>
-  <?php } ?>
+  <!-- 引入vConsole的JS库 -->
+  <script src="../dist/vconsole.min.js" nonce="<?php echo $nonce; ?>"></script>
+  <script nonce="<?php echo $nonce; ?>">
+    // 初始化vConsole
+    window.vConsole = new window.VConsole();
+  </script>
 </head>
 
-<body ontouchstart>
+<body>
   <div class="page">
-    <h1 class="page_title">Demo 2</h1>
+    <h1 class="page_title">Demo 3</h1>
     <a href="javascript:;" class="weui_btn weui_btn_primary js_btn_log">Hello World</a>
   </div>
   <div class="weui_toptips weui_notice" id="js_tips">已打印log</div>
 </body>
 
-<script>
+<script nonce="<?php echo $nonce; ?>">
 $('.js_btn_log').on('tap', function(e) {
   // 打印log时无须判断是否为dev_mode，
   // 未加载vConsole时，console.log()不会显示到前台

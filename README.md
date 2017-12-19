@@ -11,13 +11,15 @@ A lightweight, extendable front-end developer tool for mobile web page.
 
 - View console logs
 - View network requests
+- View document elements
+- View Cookies and localStorages
 - Execute JS command manually
 - Custom plugin
 
 
 ## Usage
 
-Download the [latest release](https://github.com/WechatFE/vConsole/releases/latest). (DO NOT copy `dist/vconsole.min.js` in the dev branch)
+Download the [latest release](https://github.com/Tencent/vConsole/releases/latest). (DO NOT copy `dist/vconsole.min.js` in the dev branch)
 
 Or, install via npm:
 
@@ -30,8 +32,9 @@ Import `dist/vconsole.min.js` to your project:
 ```html
 <script src="path/to/vconsole.min.js"></script>
 <script>
-console.log('Hello world');
-// then tap vConsole button to see the log
+  // init vConsole
+  var vConsole = new VConsole();
+  console.log('Hello world');
 </script>
 ```
 
@@ -64,15 +67,14 @@ Plugin:
 
 ## Plugins
 
- - [vConsole-resources](https://github.com/WechatFE/vConsole-resources)
  - [vConsole-sources](https://github.com/WechatFE/vConsole-sources)
- - [vConsole-elements](https://github.com/WechatFE/vConsole-elements)
  - [vconsole-webpack-plugin](https://github.com/diamont1001/vconsole-webpack-plugin)
 
 
 ## CDN
 
-- [v2.5.1](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/2.5.1/vconsole.min.js)
+- [v3.0.0](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js) (Recommended)
+- [v2.5.2](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/2.5.2/vconsole.min.js)
 
 
 ## Changelog
@@ -89,4 +91,4 @@ QQ Group: 497430533
 
 ## License
 
-The MIT License (http://opensource.org/licenses/MIT)
+[The MIT License](./LICENSE)

@@ -1,12 +1,22 @@
+/*
+Tencent is pleased to support the open source community by making vConsole available.
+
+Copyright (C) 2017 THL A29 Limited, a Tencent company. All rights reserved.
+
+Licensed under the MIT License (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+http://opensource.org/licenses/MIT
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+*/
+
 /**
  * vConsole core class
- *
- * @author WechatFE
  */
 
 import pkg from '../../package.json';
 import * as tool from '../lib/tool.js';
 import $ from '../lib/query.js';
+
 import './core.less';
 import tpl from './core.html';
 import tplTabbar from './tabbar.html';
@@ -14,19 +24,36 @@ import tplTabbox from './tabbox.html';
 import tplTopBarItem from './topbar_item.html';
 import tplToolItem from './tool_item.html';
 
+// built-in plugins
+import VConsoleDefaultPlugin from '../log/default.js';
+import VConsoleSystemPlugin from '../log/system.js';
+import VConsoleNetworkPlugin from '../network/network.js';
+import VConsoleElementPlugin from '../element/element.js';
+import VConsoleStoragePlugin from '../storage/storage.js';
+
+const VCONSOLE_ID = '#__vconsole';
 
 class VConsole {
 
-  constructor() {
+  constructor(opt) {
+    if (!!$.one(VCONSOLE_ID)) {
+      console.debug('vConsole is already exists.');
+      return;
+    }
     let that = this;
 
     this.version = pkg.version;
-    this.html = tpl;
     this.$dom = null;
+
+    this.isInited = false;
+    this.option = {
+      defaultPlugins: ['system', 'network', 'element', 'storage']
+    };
+
     this.activedTab = '';
     this.tabList = [];
     this.pluginList = {};
-    this.isReady = false;
+
     this.switchPos = {
       x: 10, // right
       y: 10, // bottom
@@ -40,7 +67,21 @@ class VConsole {
     this.tool = tool;
     this.$ = $;
 
+    // merge options
+    if (tool.isObject(opt)) {
+      for (let key in opt) {
+        this.option[key] = opt[key];
+      }
+    }
+
+    // add built-in plugins
+    this._addBuiltInPlugins();
+
+    // try to init
     let _onload = function() {
+      if (that.isInited) {
+        return;
+      }
       that._render();
       that._mockTap();
       that._bindEvent();
@@ -56,7 +97,7 @@ class VConsole {
       // if document does not exist, wait for it
       let _timer;
       let _pollingDocument = function() {
-          if (document && document.readyState == 'complete') {
+          if (!!document && document.readyState == 'complete') {
             _timer && clearTimeout(_timer);
             _onload();
           } else {
@@ -68,17 +109,43 @@ class VConsole {
   }
 
   /**
+   * add built-in plugins
+   */
+  _addBuiltInPlugins() {
+    // add default log plugin
+    this.addPlugin(new VConsoleDefaultPlugin('default', 'Log'));
+
+    // add other built-in plugins according to user's config
+    const list = this.option.defaultPlugins;
+    const plugins = {
+      'system': {proto: VConsoleSystemPlugin, name: 'System'},
+      'network': {proto: VConsoleNetworkPlugin, name: 'Network'},
+      'element': {proto: VConsoleElementPlugin, name: 'Element'},
+      'storage': {proto: VConsoleStoragePlugin, name: 'Storage'}
+    };
+    if (!!list && tool.isArray(list)) {
+      for (let i=0; i<list.length; i++) {
+        let tab = plugins[list[i]];
+        if (!!tab) {
+          this.addPlugin(new tab.proto(list[i], tab.name));
+        } else {
+          console.debug('Unrecognized default plugin ID:', list[i]);
+        }
+      }
+    }
+  }
+
+  /**
    * render panel DOM
    * @private
    */
   _render() {
-    let id = '#__vconsole';
-    if (! $.one(id)) {
+    if (! $.one(VCONSOLE_ID)) {
       let e = document.createElement('div');
-      e.innerHTML = this.html;
+      e.innerHTML = tpl;
       document.documentElement.insertAdjacentElement('beforeend', e.children[0]);
     }
-    this.$dom = $.one(id);
+    this.$dom = $.one(VCONSOLE_ID);
 
     // reposition switch button
     let $switch = $.one('.vc-switch', this.$dom);
@@ -98,6 +165,17 @@ class VConsole {
       this.switchPos.y = switchY;
       $.one('.vc-switch').style.right = switchX + 'px';
       $.one('.vc-switch').style.bottom = switchY + 'px';
+    }
+
+    // modify font-size
+    let dpr = window.devicePixelRatio || 1;
+    let viewportEl = document.querySelector('[name="viewport"]');
+    if (viewportEl && viewportEl.content) {
+      let initialScale = viewportEl.content.match(/initial\-scale\=\d+(\.\d+)?/);
+      let scale = initialScale ? parseFloat(initialScale[0].split('=')[1]) : 1;
+      if (scale < 1) {
+        this.$dom.style.fontSize = 13 * dpr + 'px';
+      }
     }
 
     // remove from less to present transition effect
@@ -176,7 +254,6 @@ class VConsole {
       touchHasMoved = false;
       targetElem = null;
     }, false);
-
   }
   /**
    * bind DOM events
@@ -301,7 +378,6 @@ class VConsole {
     $.bind($content, 'touchend', function (e) {
       preventMove = false;
     });
-
   };
 
   /**
@@ -309,7 +385,7 @@ class VConsole {
    * @private
    */
   _autoRun() {
-    this.isReady = true;
+    this.isInited = true;
 
     // init plugins
     for (let id in this.pluginList) {
@@ -328,6 +404,7 @@ class VConsole {
    */
   _initPlugin(plugin) {
     let that = this;
+    plugin.vConsole = this;
     // start init
     plugin.trigger('init');
     // render tab (if it is a tab plugin then it should has tab-related events)
@@ -387,7 +464,7 @@ class VConsole {
       if (!toolList) {
         return;
       }
-      let $defaultBtn = $.one('.vc-tool-last');
+      let $defaultBtn = $.one('.vc-tool-last', that.$dom);
       for (let i=0; i<toolList.length; i++) {
         let item = toolList[i];
         let $item = $.render(tplToolItem, {
@@ -439,12 +516,12 @@ class VConsole {
   addPlugin(plugin) {
     // ignore this plugin if it has already been installed
     if (this.pluginList[plugin.id] !== undefined) {
-      console.warn('Plugin ' + plugin.id + ' has already been added.');
+      console.debug('Plugin ' + plugin.id + ' has already been added.');
       return false;
     }
     this.pluginList[plugin.id] = plugin;
     // init plugin only if vConsole is ready
-    if (this.isReady) {
+    if (this.isInited) {
       this._initPlugin(plugin);
       // if it's the first plugin, show it by default
       if (this.tabList.length == 1) {
@@ -465,14 +542,14 @@ class VConsole {
     let plugin = this.pluginList[pluginID];
     // skip if is has not been installed
     if (plugin === undefined) {
-      console.warn('Plugin ' + pluginID + ' does not exist.');
+      console.debug('Plugin ' + pluginID + ' does not exist.');
       return false;
     }
     // trigger `remove` event before uninstall
     plugin.trigger('remove');
     // the plugin will not be initialized before vConsole is ready,
     // so the plugin does not need to handle DOM-related actions in this case
-    if (this.isReady) {
+    if (this.isInited) {
       let $tabbar = $.one('#__vc_tab_' + pluginID);
       $tabbar && $tabbar.parentNode.removeChild($tabbar);
       // remove topbar
@@ -513,6 +590,9 @@ class VConsole {
    * @public
    */
   show() {
+    if (!this.isInited) {
+      return;
+    }
     let that = this;
     // before show console panel,
     // trigger a transitionstart event to make panel's property 'display' change from 'none' to 'block'
@@ -529,10 +609,13 @@ class VConsole {
   }
 
   /**
-   * hide console paneldocument.body.scrollTop
+   * hide console panel
    * @public
    */
   hide() {
+    if (!this.isInited) {
+      return;
+    }
     $.removeClass(this.$dom, 'vc-toggle');
     this._triggerPluginsEvent('hideConsole');
 
@@ -549,6 +632,9 @@ class VConsole {
    * @public
    */
   showTab(tabID) {
+    if (!this.isInited) {
+      return;
+    }
     let $logbox = $.one('#__vc_log_' + tabID);
     // set actived status
     $.removeClass($.all('.vc-tab', this.$dom), 'vc-actived');
@@ -571,6 +657,41 @@ class VConsole {
     this._triggerPluginEvent(this.activedTab, 'hide');
     this.activedTab = tabID;
     this._triggerPluginEvent(this.activedTab, 'show');
+  }
+
+  /**
+   * update option(s)
+   * @public
+   */
+  setOption(keyOrObj, value) {
+    if (tool.isString(keyOrObj)) {
+      this.option[keyOrObj] = value;
+      this._triggerPluginsEvent('updateOption');
+    } else if (tool.isObject(keyOrObj)) {
+      for (let k in keyOrObj) {
+        this.option[k] = keyOrObj[k];
+      }
+      this._triggerPluginsEvent('updateOption');
+    } else {
+      console.debug('The first parameter of vConsole.setOption() must be a string or an object.');
+    }
+  }
+
+  /**
+   * uninstall vConsole
+   * @public
+   */
+  destroy() {
+    if (!this.isInited) {
+      return;
+    }
+    // remove plugins
+    let IDs = Object.keys(this.pluginList);
+    for (let i = IDs.length - 1; i >= 0; i--) {
+      this.removePlugin(IDs[i]);
+    }
+    // remove DOM
+    this.$dom.parentNode.removeChild(this.$dom);
   }
 
 } // END class
