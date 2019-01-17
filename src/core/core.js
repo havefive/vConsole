@@ -396,6 +396,19 @@ class VConsole {
     if (this.tabList.length > 0) {
       this.showTab(this.tabList[0]);
     }
+
+    this.triggerEvent('ready');
+  }
+
+  /**
+   * trigger a vConsole.option event
+   * @protect
+   */
+  triggerEvent(eventName, param) {
+    eventName = 'on' + eventName.charAt(0).toUpperCase() + eventName.slice(1);
+    if (tool.isFunction(this.option[eventName])) {
+      this.option[eventName].apply(this, param);
+    }
   }
 
   /**
@@ -483,6 +496,7 @@ class VConsole {
       }
     });
     // end init
+    plugin.isReady = true;
     plugin.trigger('ready');
   }
 
@@ -492,7 +506,9 @@ class VConsole {
    */
   _triggerPluginsEvent(eventName) {
     for (let id in this.pluginList) {
-      this.pluginList[id].trigger(eventName);
+      if (this.pluginList[id].isReady) {
+        this.pluginList[id].trigger(eventName);
+      }
     }
   }
 
@@ -502,7 +518,7 @@ class VConsole {
    */
   _triggerPluginEvent(pluginName, eventName) {
     let plugin = this.pluginList[pluginName];
-    if (plugin) {
+    if (!!plugin && plugin.isReady) {
       plugin.trigger(eventName);
     }
   }
@@ -628,6 +644,29 @@ class VConsole {
   }
 
   /**
+   * show switch button
+   * @public
+   */
+  showSwitch() {
+    if (!this.isInited) {
+      return;
+    }
+    let $switch = $.one('.vc-switch', this.$dom);
+    $switch.style.display = 'block';
+  }
+
+  /**
+   * hide switch button
+   */
+  hideSwitch() {
+    if (!this.isInited) {
+      return;
+    }
+    let $switch = $.one('.vc-switch', this.$dom);
+    $switch.style.display = 'none';
+  }
+
+  /**
    * show a tab
    * @public
    */
@@ -654,7 +693,7 @@ class VConsole {
     $.removeClass($.all('.vc-tool', this.$dom), 'vc-toggle');
     $.addClass($.all('.vc-tool-' + tabID, this.$dom), 'vc-toggle');
     // trigger plugin event
-    this._triggerPluginEvent(this.activedTab, 'hide');
+    this.activedTab && this._triggerPluginEvent(this.activedTab, 'hide');
     this.activedTab = tabID;
     this._triggerPluginEvent(this.activedTab, 'show');
   }

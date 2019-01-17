@@ -12,7 +12,7 @@ vConsole
 - 查看 console 日志
 - 查看网络请求
 - 查看页面 element 结构
-- 查看 Cookies 和 localStorage
+- 查看 Cookies 和 localStorage，还支持SessionStorage
 - 手动执行 JS 命令行
 - 自定义插件
 
@@ -78,13 +78,6 @@ vConsole 本体：
 ## 更新记录
 
 [CHANGELOG_CN.md](./CHANGELOG_CN.md)
-
-
-
-## CDN
-
-- [v3.0.0](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js) （推荐）
-- [v2.5.2](https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/2.5.2/vconsole.min.js)
 
 
 

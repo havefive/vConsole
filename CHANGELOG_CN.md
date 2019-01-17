@@ -1,5 +1,33 @@
 [English](./CHANGELOG.md) | 简体中文
 
+#### V3.2.1 (2019-01-16)
+
+- 【特性】新增控制台输入提示。 (by @65147400)
+- 【修复】修复 `JSON.stringify` 函数被错误地改写的问题。
+- 【修复】修复清空日志时没有重置 `logNumber` 的问题。 (by @liuyuekeng)
+- 【修复】修复 Network 面板中 HTML 标签未被 encode 的问题。 (by @mokang)
+- 【修复】修复 Storage 面板 decode 内容时可能会导致崩溃的问题。 (by @wolfsilver)
+- 【优化】增加底部安全区域，适配 iPhone X 等全面屏。 (by @dingyi1993)
+
+
+#### V3.2.0 (2018-04-10)
+
+- 【特性】支持 `console.time()` 及 `console.timeEnd()`。
+- 【特性】新增 `disableLogScrolling` 配置项（`vConsole.option`），用于禁止新日志引起的自动滚动到底部。
+- 【修复】修复初始化后立即调用 `setOption` 引起的错误。
+- 【修复】修复 cookies 显示错误的问题。
+- 【修复】修复 "Uncaught InvalidStateError" 错误。 (by @fireyy)
+
+
+#### V3.1.0 (2017-12-27)
+
+- 【特性】新增 `vConsole.showSwitch()` 及 `vConsole.hideSwitch()` 方法，请查阅[公共属性及方法](./doc/public_properties_methods_CN.md)。
+- 【特性】新增 `onReady` 及 `onClearLog` 回调方法，位于 `vConsole.option`。
+- 【特性】调用 `console.clear` 时将自动清除面板中的日志。
+- 【修复】修复 Windows 下构建引起的 `\r` 转义问题。
+- 【修复】修复 iOS8 或其它低版本系统中的 `Symbol` 错误。
+
+
 #### V3.0.0 (2017-09-27)
 
 基础：
@@ -48,7 +76,7 @@ Network 插件：
 
 #### V2.5.0 (2016-09-28)
 
-- 【特性】新增 `vConsole.removePlugin()` 方法，请查阅[Public Properties & Methods](./doc/public_properties_methods_CN.md)。
+- 【特性】新增 `vConsole.removePlugin()` 方法，请查阅[公共属性及方法](./doc/public_properties_methods_CN.md)。
 - 【特性】新增 `remove` 插件事件，请查阅[插件：Event 事件列表](./doc/plugin_event_list_CN.md)。
 - 【优化】页面不会随着 vConsole 的滚动而滚动。
 - 【修复】修正 `window.onerror()` 内的函数调用笔误。
